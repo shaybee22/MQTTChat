@@ -70,12 +70,12 @@ You can generate a self-contained `.exe` using `pyinstaller` and the included ba
 2. Run the batch script:
 
    ```bash
-   build_desktop_app.bat
+   build_mqchat.bat
    ```
 
 This will compile `mqchat.py` into a portable executable inside the `dist/` folder.
 
-[View the batch script](https://github.com/shaybee22/MQTTChat/blob/main/build_desktop_app.bat)
+[View the batch script](https://github.com/shaybee22/MQTTChat/blob/main/build_mqchat.bat)
 
 ---
 
