@@ -11,6 +11,7 @@ from kivy.uix.checkbox import CheckBox
 from kivy.uix.spinner import Spinner
 from kivy.uix.popup import Popup
 from kivy.uix.scrollview import ScrollView
+from kivy.clock import Clock
 # Note: kivy.clipboard not available on Android
 
 ROOMS_DIR = "rooms"
@@ -306,34 +307,46 @@ class ConnectionScreen(Screen):
         # Spacer
         layout.add_widget(Label(size_hint_y=None, height='20dp'))
 
-        # Save and copy room buttons
+        # Save, copy, and delete room buttons (now 3 buttons instead of 2)
         room_buttons = BoxLayout(
             orientation='horizontal',
             size_hint_y=None,
-            height='70dp',
-            spacing=15
+            height='65dp',  # Slightly reduced height
+            spacing=10  # Reduced spacing to fit 3 buttons
         )
         
         self.save_button = Button(
             text='Save Room',
-            size_hint_x=0.5,
-            font_size='16sp',
+            size_hint_x=0.33,  # Changed from 0.5 to 0.33 for 3 buttons
+            font_size='15sp',  # Slightly smaller font
             size_hint_y=None,
-            height='65dp'
+            height='60dp'  # Slightly reduced height
         )
         self.save_button.bind(on_release=self.save_room)
         
         self.copy_room_button = Button(
             text='Copy Config',
-            size_hint_x=0.5,
-            font_size='16sp',
+            size_hint_x=0.33,  # Changed from 0.5 to 0.33 for 3 buttons
+            font_size='15sp',  # Slightly smaller font
             size_hint_y=None,
-            height='65dp'
+            height='60dp'  # Slightly reduced height
         )
         self.copy_room_button.bind(on_release=self.copy_room_config)
         
+        # New delete button
+        self.delete_room_button = Button(
+            text='Delete Room',
+            size_hint_x=0.33,  # 1/3 width for 3 buttons
+            font_size='15sp',  # Slightly smaller font
+            size_hint_y=None,
+            height='60dp',  # Slightly reduced height
+            background_color=[0.8, 0.3, 0.3, 1]  # Reddish color to indicate destructive action
+        )
+        self.delete_room_button.bind(on_release=self.delete_room)
+        
         room_buttons.add_widget(self.save_button)
         room_buttons.add_widget(self.copy_room_button)
+        room_buttons.add_widget(self.delete_room_button)
         layout.add_widget(room_buttons)
 
         # Big spacer
@@ -377,23 +390,44 @@ class ConnectionScreen(Screen):
             self.show_popup("New encryption key generated! (Install 'cryptography' package for stronger keys)")
 
     def copy_key(self, instance):
-        """Copy the encryption key to clipboard (mobile-friendly)"""
-        if self.key_input.text:
-            # On mobile, just show the key in a popup for manual copying
-            self.show_popup(f"Encryption Key:\n{self.key_input.text}\n\n(Long press to copy manually)")
-        else:
+        """Copy the encryption key to clipboard"""
+        if not self.key_input.text:
             self.show_popup("No key to copy!")
+            return
+            
+        try:
+            # Try to use Kivy's clipboard
+            from kivy.core.clipboard import Clipboard
+            Clipboard.copy(self.key_input.text)
+            self.show_popup("Encryption key copied to clipboard!")
+        except ImportError:
+            # Fallback: Show key in popup for manual copying
+            self.show_popup(f"Clipboard not available.\n\nEncryption Key:\n{self.key_input.text}\n\n(Long press to select and copy manually)")
+        except Exception as e:
+            # Another fallback if clipboard fails for any reason
+            print(f"Clipboard error: {e}")
+            self.show_popup(f"Could not copy to clipboard.\n\nEncryption Key:\n{self.key_input.text}\n\n(Long press to select and copy manually)")
 
     def copy_room_config(self, instance):
-        """Copy room configuration as shareable text (mobile-friendly)"""
+        """Copy room configuration as shareable text"""
         config_text = f"""MQTT Chat Room Config:
 Server: {self.server_input.text}
 Port: {self.port_input.text}
 Room: {self.room_input.text}
 Key: {self.key_input.text if self.key_input.text else 'None'}"""
         
-        # On mobile, show in popup for manual copying
-        self.show_popup(f"Room Configuration:\n\n{config_text}\n\n(Long press to copy manually)")
+        try:
+            # Try to use Kivy's clipboard
+            from kivy.core.clipboard import Clipboard
+            Clipboard.copy(config_text)
+            self.show_popup("Room configuration copied to clipboard!")
+        except ImportError:
+            # Fallback: Show config in popup for manual copying
+            self.show_popup(f"Clipboard not available.\n\nRoom Configuration:\n\n{config_text}\n\n(Long press to select and copy manually)")
+        except Exception as e:
+            # Another fallback if clipboard fails for any reason
+            print(f"Clipboard error: {e}")
+            self.show_popup(f"Could not copy to clipboard.\n\nRoom Configuration:\n\n{config_text}\n\n(Long press to select and copy manually)")
 
     def toggle_key_visibility(self, checkbox, value):
         """Toggle password visibility for encryption key"""
@@ -454,6 +488,109 @@ Key: {self.key_input.text if self.key_input.text else 'None'}"""
             
         except Exception as e:
             self.show_popup(f"Error saving room: {e}")
+
+    def delete_room(self, instance):
+        """Delete a saved room configuration with confirmation"""
+        if self.room_spinner.text == 'Load Room' or not self.room_spinner.text:
+            self.show_popup("Please select a room to delete from the dropdown first!")
+            return
+        
+        room_name = self.room_spinner.text
+        
+        # Create confirmation popup
+        content_layout = BoxLayout(orientation='vertical', spacing=20, padding=20)
+        
+        warning_label = Label(
+            text=f"Are you sure you want to delete the saved room:\n\n'{room_name}'\n\nThis action cannot be undone.",
+            font_size='16sp',
+            halign='center',
+            valign='middle',
+            text_size=(None, None)
+        )
+        content_layout.add_widget(warning_label)
+        
+        # Button layout for confirmation
+        button_layout = BoxLayout(
+            orientation='horizontal',
+            size_hint_y=None,
+            height='60dp',
+            spacing=15
+        )
+        
+        cancel_button = Button(
+            text='Cancel',
+            size_hint_x=0.5,
+            font_size='16sp',
+            background_color=[0.5, 0.5, 0.5, 1]  # Gray color
+        )
+        
+        confirm_button = Button(
+            text='Delete',
+            size_hint_x=0.5,
+            font_size='16sp',
+            background_color=[0.8, 0.3, 0.3, 1]  # Red color
+        )
+        
+        button_layout.add_widget(cancel_button)
+        button_layout.add_widget(confirm_button)
+        content_layout.add_widget(button_layout)
+        
+        # Create popup
+        popup = Popup(
+            title='Confirm Delete',
+            content=content_layout,
+            size_hint=(0.9, 0.6),
+            auto_dismiss=False  # Prevent accidental dismissal
+        )
+        
+        # Bind button actions
+        def cancel_delete(instance):
+            popup.dismiss()
+        
+        def confirm_delete(instance):
+            popup.dismiss()
+            self.perform_room_deletion(room_name)
+        
+        cancel_button.bind(on_release=cancel_delete)
+        confirm_button.bind(on_release=confirm_delete)
+        
+        # Update label text size after popup opens
+        def update_label_size(dt):
+            try:
+                warning_label.text_size = (popup.width - 40, None)
+            except:
+                pass  # Ignore if popup is already closed
+        Clock.schedule_once(update_label_size, 0.1)
+        
+        popup.open()
+
+    def perform_room_deletion(self, room_name):
+        """Actually delete the room file and update UI"""
+        try:
+            file_path = os.path.join(ROOMS_DIR, f"{room_name}.json")
+            print(f"Attempting to delete: {file_path}")  # Debug print
+            
+            if os.path.exists(file_path):
+                os.remove(file_path)
+                print(f"Successfully deleted: {file_path}")  # Debug print
+                
+                # Update spinner values and reset to default
+                new_rooms = self.get_saved_rooms()
+                print(f"Remaining rooms: {new_rooms}")  # Debug print
+                
+                self.room_spinner.values = new_rooms
+                self.room_spinner.text = 'Load Room'
+                
+                self.show_popup(f"Room '{room_name}' has been deleted successfully!")
+            else:
+                print(f"File does not exist: {file_path}")  # Debug print
+                self.show_popup(f"Room file not found: {room_name}")
+                
+        except Exception as e:
+            print(f"Error deleting room: {e}")  # Debug print
+            import traceback
+            traceback.print_exc()  # Print full traceback for debugging
+            self.show_popup(f"Error deleting room: {e}")
 
     def show_popup(self, message):
         """Show info popup with better mobile sizing"""
@@ -518,6 +655,7 @@ Key: {self.key_input.text if self.key_input.text else 'None'}"""
 # For testing the connection screen standalone
 if __name__ == '__main__':
     from kivy.app import App
+    from kivy.clock import Clock
     
     class TestApp(App):
         def build(self):
