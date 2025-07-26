@@ -32,11 +32,11 @@ MQChat is a cross-platform, end-to-end encrypted group chat client that uses MQT
 
 ### 🔧 One-Click Build:
 
-Use the included `build_linux_portable.sh` script:
+Use the included `build_mqchat.sh` script:
 
 ```bash
-chmod +x build_linux_portable.sh
-./build_linux_portable.sh
+chmod +x build_mqchat.sh
+./build_mqchat.sh
 ```
 
 This will:
@@ -78,7 +78,7 @@ python3 mqchat.py
 ```
 📁 MQTTChat_Linux/
 ├── mqchat.py                  # Main app
-├── build_linux_portable.sh    # Bash script to build Linux executable
+├── build_mqchat.sh    # Bash script to build Linux executable
 ├── portable/                  # Output folder for standalone binary (created at build)
 ```
 
