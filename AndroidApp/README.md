@@ -111,4 +111,6 @@ Ensure that the MQTT broker you're connecting to:
 See [LICENSE](https://github.com/shaybee22/MQTTChat/blob/main/LICENSE) for usage restrictions. TL;DR: **Personal use only**, give full credit if modified, and **don’t sell it** without permission.
 
 ---
+Future Features!
+Adding qr code for easy encryption key sharing on the Android App!
 
