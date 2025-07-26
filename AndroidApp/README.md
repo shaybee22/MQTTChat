@@ -93,7 +93,7 @@ AndroidApp/
 
 ## 📸 Screenshots (optional)
 
-> Add screenshots here in the future to show off the mobile UI!
+> Comming soon!
 
 ---
 
