@@ -4,3 +4,4 @@ To install all the packages needed to compile I recommend using Claude.ai and up
 My appologies for this as I did not stop and take notes on everything I had to install to do the buildozer and make the .apk file but it worked and the apk is working on my phone just fine
 You basically just put all of the files in a directory, run "buildozer android debug" (after all the needed packages are installed) and it will build the apk file in a subdirectory /bin of your working directory
 Bug found, no way to delete saved chat rooms, will make changes and update files tonight 7/25/2025
+Fixed 2 issues with the Android app, copy key feature was not copying the encryption key to the clipboard, now fixed, added delete button to be able to remove old chat rooms or any you no longer want. Completed and tested 8:31PM 7/25/2025
